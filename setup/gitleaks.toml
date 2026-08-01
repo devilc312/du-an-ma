@@ -1,0 +1,17 @@
+title = "Project Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore generated dependencies and local-only files"
+paths = [
+  '''(^|/|\\)\.venv($|/|\\)''',
+  '''(^|/|\\)node_modules($|/|\\)''',
+  '''(^|/|\\)dist($|/|\\)''',
+  '''(^|/|\\)(\.ruff_cache|\.pytest_cache)($|/|\\)''',
+  '''(^|/|\\)\.env$''',
+]
+regexes = [
+  '''StrongPass123''',
+]

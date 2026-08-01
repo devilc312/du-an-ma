@@ -1,0 +1,14 @@
+import { useState } from 'react'
+import { Check, Bell, Trash2 } from 'lucide-react'
+import { Card, Button } from '../components/ui'
+import { notificationsApi } from '../api/ai'
+import { getErrorMessage } from '../api/client'
+import { useNotifications } from '../hooks/useApi'
+import { formatDistanceToNow } from 'date-fns'
+import { vi } from 'date-fns/locale'
+
+export function NotificationsPage() {
+  const notifications = useNotifications(); const [busy, setBusy] = useState(false); const [error, setError] = useState('')
+  const run = async (action: () => Promise<unknown>) => { setBusy(true); setError(''); try { await action(); await notifications.refetch() } catch (reason) { setError(getErrorMessage(reason, 'Không thể cập nhật thông báo.')) } finally { setBusy(false) } }
+  return <div className="mx-auto max-w-3xl"><div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-bold">Thông báo</h1><p className="mt-2 text-slate-500">{notifications.data?.unread_count ?? 0} thông báo chưa đọc.</p></div><Button variant="secondary" onClick={() => void run(notificationsApi.markAllRead)} disabled={busy}><Check size={16} className="mr-2"/>Đánh dấu đã đọc</Button></div>{error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}<Card className="mt-6 divide-y divide-slate-100 p-0">{notifications.isError ? <div className="p-10 text-center"><p className="text-rose-600">Không thể tải thông báo.</p><Button className="mt-3" variant="secondary" onClick={() => void notifications.refetch()}>Thử lại</Button></div> : notifications.isLoading ? <p className="p-10 text-center text-slate-500">Đang tải thông báo…</p> : notifications.data?.items.length ? notifications.data.items.map(notification => <div key={notification.id} className={`flex w-full gap-3 p-4 ${!notification.is_read ? 'bg-indigo-50/50' : ''}`}><button className="flex min-w-0 flex-1 gap-3 text-left" onClick={() => void run(() => notificationsApi.markRead(notification.id))}><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700"><Bell size={17}/></span><span className="min-w-0 flex-1"><strong className="block text-sm">{notification.title}</strong><span className="mt-1 block text-sm text-slate-600">{notification.message}</span><small className="mt-1 block text-xs text-slate-400">{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: vi })}</small></span>{!notification.is_read && <i className="mt-2 size-2 shrink-0 rounded-full bg-indigo-600"/>}</button><button aria-label="Xóa thông báo" className="self-start p-2 text-slate-400 hover:text-rose-600" onClick={() => void run(() => notificationsApi.remove(notification.id))}><Trash2 size={16}/></button></div>) : <p className="p-10 text-center text-slate-500">Bạn đã cập nhật. Không có thông báo mới.</p>}</Card></div>
+}

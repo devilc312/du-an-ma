@@ -1,0 +1,16 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import { AuthLayout } from './layouts/AuthLayout'
+import { AppLayout } from './layouts/AppLayout'
+import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { DashboardPage } from './pages/DashboardPage'
+import { AiPage } from './pages/AiPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { NotificationsPage } from './pages/NotificationsPage'
+import { AdminPage } from './pages/AdminPage'
+import './styles.css'
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, retry: 1 } } })
+export default function App() { return <QueryClientProvider client={queryClient}><BrowserRouter><AuthProvider><Routes><Route element={<AuthLayout />}><Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /></Route><Route element={<ProtectedRoute />}><Route path="/app" element={<AppLayout />}><Route index element={<DashboardPage />} /><Route path="ai" element={<AiPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="notifications" element={<NotificationsPage />} /><Route element={<AdminRoute />}><Route path="admin" element={<AdminPage />} /></Route></Route></Route><Route path="*" element={<Navigate to="/app" replace />} /></Routes></AuthProvider></BrowserRouter></QueryClientProvider> }

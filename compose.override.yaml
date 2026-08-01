@@ -1,0 +1,12 @@
+# Local development overrides. Docker Compose loads this file automatically.
+services:
+  api:
+    user: root
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+
+  worker:
+    user: root
+    volumes:
+      - ./backend:/app

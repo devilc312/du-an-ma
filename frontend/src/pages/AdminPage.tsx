@@ -1,0 +1,14 @@
+import { useState } from 'react'
+import { Card, Button, Input } from '../components/ui'
+import { useAdminUsers } from '../hooks/useApi'
+import { usersApi } from '../api/users'
+import { useAuth } from '../hooks/useAuth'
+import { getErrorMessage } from '../api/client'
+
+export function AdminPage() {
+  const { user } = useAuth(); const [search, setSearch] = useState(''); const users = useAdminUsers(!!user?.roles.includes('admin'), search)
+  const [busy, setBusy] = useState<string | null>(null); const [error, setError] = useState('')
+  const run = async (id: string, action: () => Promise<unknown>) => { setBusy(id); setError(''); try { await action(); await users.refetch() } catch (reason) { setError(getErrorMessage(reason, 'Không thể cập nhật tài khoản.')) } finally { setBusy(null) } }
+  const role = async (id: string, isAdmin: boolean) => { if (!confirm(`${isAdmin ? 'Gỡ' : 'Cấp'} quyền admin cho tài khoản này?`)) return; await run(id, () => usersApi.setRoles(id, isAdmin ? ['user'] : ['user', 'admin'])) }
+  return <div className="mx-auto max-w-5xl"><h1 className="text-3xl font-bold">Quản trị người dùng</h1><p className="mt-2 text-slate-500">Chỉ quản trị viên được cấp quyền. Tài khoản mới luôn là user.</p><Input className="mt-5 max-w-sm" placeholder="Tìm theo email hoặc tên" value={search} onChange={event => setSearch(event.target.value)}/>{error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}<Card className="mt-6 overflow-x-auto p-0"><table className="w-full min-w-[650px] text-left text-sm"><thead className="border-b bg-slate-50 text-slate-500"><tr><th className="p-4">Người dùng</th><th className="p-4">Vai trò</th><th className="p-4">Trạng thái</th><th className="p-4">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{users.isError ? <tr><td className="p-8 text-center text-rose-600" colSpan={4}>Không thể tải danh sách người dùng.</td></tr> : users.isLoading ? <tr><td className="p-8 text-center" colSpan={4}>Đang tải…</td></tr> : users.data?.map(item => <tr key={item.id}><td className="p-4"><strong>{item.full_name}</strong><span className="block text-xs text-slate-500">{item.email}</span></td><td className="p-4"><button disabled={busy === item.id || item.id === user?.id} className="rounded-lg bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 disabled:opacity-50" onClick={() => void role(item.id, item.roles.includes('admin'))}>{item.roles.includes('admin') ? 'Admin' : 'User'}</button></td><td className="p-4"><span className={item.is_active ? 'text-emerald-600' : 'text-rose-600'}>{item.is_active ? 'Hoạt động' : 'Đã khóa'}</span></td><td className="p-4"><Button variant="secondary" disabled={busy === item.id || item.id === user?.id} onClick={() => void run(item.id, () => usersApi.setActive(item.id, !item.is_active))}>{item.is_active ? 'Khóa' : 'Mở khóa'}</Button></td></tr>)}</tbody></table></Card></div>
+}
